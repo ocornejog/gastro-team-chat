@@ -1,0 +1,251 @@
+/*Chat Actions Types */
+export const ALL_USERS = 'ALL_USERS';
+export const ACTIVE_ROOM = 'ACTIVE_ROOM';
+export const ACTIVE_USER = 'ACTIVE USER';
+export const ADD_MESSAGE = 'ADD_MESSAGE';
+export const INJECT_MESSAGE = 'INJECT_MESSAGE';
+export const LOAD_MESSAGE = 'LOAD_MESSAGE';
+export const CLEAR_ACTIVE_MSGS = 'CLEAR_ACTIVE_MSGS';
+
+
+exp://192.168.1.7:19000
+
+
+
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect } from "react";
+import {Text, View, StyleSheet, ActivityIndicator} from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+
+import { DrawerContent } from "./screens/DrawerContent";
+import UserList from "./screens/UserList";
+import SignUp from "./screens/SignUp";
+import SignIn from "./screens/SignIn";
+import RootScreen from "./screens/RootScreen";
+import { AuthContext } from "./components/context";
+//import { UserNavigator } from "./screens/Users";
+//import { useDispatch } from "react-redux";
+//import { handleDispatchMsg } from "./components/actions/chatActions";
+const Drawer = createDrawerNavigator()
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
+    //backgroundColor: "#00ffff" 
+    //backgroundColor: "#2f4f4f"
+  }
+})
+const App = () => {
+  //const dispatch = useDispatch();
+  //useEffect(() => {
+  //  dispatch(loadUser());
+  //  dispatch(handleDispatchMsg());
+  //}, []);
+
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [userToken, setUserToken] = React.useState(null);
+  /*const initialLoginState = {
+    isLoading: true,
+    userName: null,
+    userToken: null,
+  };*/
+  /*const loginReducer = (prevState, action) => {
+    switch(action.type){
+      case 'RETRIEVE_TOKEN':
+        return {
+          ... prevState,
+          userToken: action.token,
+          isLoading: false,
+        };
+      case 'LOGIN':
+        return {
+          ... prevState,
+          userName: action.id,
+          userToken: action.token,
+          isLoading: false,
+        };
+      case 'LOGOUT':
+        return {
+          ... prevState,
+          userName: null,
+          userToken: null,
+          isLoading: false,
+        };
+      case 'REGISTER':
+        return {
+          ... prevState,
+          userName: action.id,
+          userToken: action.token,
+          isLoading: false,
+        };
+    }
+  };*/
+
+  //const [ loginState, dispatch ] = React.useReducer(loginReducer, initialLoginState);
+  
+  const authContext = React.useMemo(() => ({
+    signIn: (userName, password) => {
+      setUserToken('asdf');
+      setIsLoading(false);
+
+    },
+    signOut: () => {
+      setUserToken(null);
+      setIsLoading(false);
+    },
+    signUp: () => {
+      setUserToken('asdf');
+      setIsLoading(false);
+    },
+
+  }));
+/*
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  }, []); */
+  if (isLoading) {
+    return(
+      <View style={styles.container}>
+        <ActivityIndicator size = "large"/>
+      </View>
+    );
+  }
+  return(
+    <AuthContext.Provider value = { authContext }>
+        <NavigationContainer>
+          { userToken != null ? (
+            <Drawer.Navigator drawerContent= {props => <DrawerContent {...props} />}>
+            <Drawer.Screen name = "UserList" component = { UserList }/>
+            <Drawer.Screen name = "SignIn"component = { SignIn }/>
+            <Drawer.Screen name = "SignUp" component = { SignUp }/>
+            {/*<Drawer.Screen name = "User" component = { UserNavigator }/>*/}
+            </Drawer.Navigator>
+          )
+          :
+          <RootScreen/>
+          }
+          <Navigator></Navigator>
+        </NavigationContainer>
+    </AuthContext.Provider>
+  );
+}
+
+export default App;
+
+
+
+
+import React, { useState } from "react";
+import {Text, View, StyleSheet, Image, TouchableOpacity,Button, Alert, Platform, ImagePropTypes} from "react-native";
+//import image from './assets/logo.png'
+import image from '../assets/logo.png';
+import * as ImagePicker from "expo-image-picker";
+import * as Sharing from "expo-sharing";
+//import uploadToAnonymousFilesAsync from "anonymous-files";
+const UserList = () => {
+  const [selectedImage, setSelectedImage] = useState(null)
+  let openImagePickerAsync = async() => {
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if(permissionResult.granted === false){
+      alert('Permission to access camera is required');
+      return;
+    }
+    const pickerResult = await ImagePicker.launchImageLibraryAsync()
+    //console.log(pickerResult)
+    if(pickerResult.cancelled === true){
+      return;
+    }
+    if(Platform.OS === 'web') {
+      //let remoteUri = await uploadToAnonymousFilesAsync(pickerResult.uri);
+      //console.log(remoteUri)
+      //return;
+      setSelectedImage({localUri: pickerResult.uri});
+      //setSelectedImage({localUri: pickerResult.uri, remoteUri: remoteUri});
+    } else {
+      setSelectedImage({localUri: pickerResult.uri});
+    }
+  };
+  const openShareDialog = async() => {
+    if (!(await Sharing.isAvailableAsync())) {
+      alert("Sharing functions are not available on your platform");
+      //alert(`The image is available for sharing at: ${selectedImage.remoteUri}`);
+      return;
+    }
+
+    await Sharing.shareAsync(selectedImage.localUri);
+  }
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Gastro Team</Text>
+      <TouchableOpacity
+        onPress={openImagePickerAsync}
+      >
+        <Image
+          //source = {{uri: selectedImage !== null ? selectedImage.localUri} : 'https://picsum.photos/200/200'}}
+          source = {selectedImage !== null ? {uri: selectedImage.localUri} : image}
+          //source = {image}
+          style={styles.image}
+        />
+      </TouchableOpacity>
+      <Button
+        color="#ff4500"
+        title="Press me"
+        //onPress={() => console.log('Hello World')}
+        onPress={() => Alert.alert('Hello!!!')}
+      />
+      {
+        selectedImage ?
+        <TouchableOpacity
+          onPress={openShareDialog}
+          style={styles.button}
+        >
+          <Text style= {styles.buttonText}>Share Me!</Text>
+        </TouchableOpacity>
+        : (<View/>)
+      }
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    backgroundColor: "#00ffff" 
+    //backgroundColor: "#2f4f4f"
+  },
+  title: {
+    fontSize: 30,
+    color: "#2f4f4f"
+    //color: "#fffaf0"
+  },
+  image: {
+    height: 140, 
+    width: 200,
+    resizeMode: "contain"
+    //borderRadius: 100
+  },
+  button:{
+    backgroundColor: "navy",
+    padding: 7,
+    marginTop: 10
+  },
+  buttonText:{
+    color: "white",
+    fontSize: 20
+  }
+})
+//Lo de arriba es como un archivo de CSS
+
+export default UserList;
+
+//Lo de arriba es como un archivo de CSS
+
+
+http://localhost:19006/
